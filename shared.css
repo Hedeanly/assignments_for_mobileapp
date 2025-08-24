@@ -43,9 +43,9 @@ p.intro {
     color: #2f2f3a;
 }
 
-/* Navigation Bar */
+
 nav {
-    background: #0a2342; /* deep navy */
+    background: #eff2b3;
     padding: 18px 25px;  /* bigger height */
     text-align: center;
     border-radius: 12px;
@@ -70,7 +70,7 @@ nav a:hover {
     color: #0a2342; /* navy text when hovered */
 }
 
-/* Special styling for Assignments link */
+
 nav a.assignments {
     color: #ffffff; /* pure white text */
 }
