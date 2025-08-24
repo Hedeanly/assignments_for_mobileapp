@@ -1,15 +1,14 @@
 body {
     font-family: 'Segoe UI', sans-serif;
-    background-color: #f8f9fb; /* soft cool background */
-    color: #1c1c2a; /* near-black navy */
+    background-color: #f8f9fb;
+    color: #1c1c2a;
     margin: 20px;
     padding: 0;
 }
 
-
 h1 {
     text-align: center;
-    color: #0a2342; /* deep navy */
+    color: #0a2342;
     font-size: 2.5rem;
     margin-bottom: 10px;
 }
@@ -17,14 +16,14 @@ h1 {
 p.intro {
     text-align: center;
     font-size: 1.1rem;
-    color: #4a4a4a; /* cool gray */
+    color: #4a4a4a;
     max-width: 700px;
     margin: 0 auto 30px;
 }
 
 .section {
-    background: #e9ecf2; /* soft navy-gray panel */
-    border-left: 6px solid #c9a227; /* gold accent */
+    background: #e9ecf2;
+    border-left: 6px solid #c9a227;
     padding: 15px 20px;
     margin: 10px auto;
     max-width: 600px;
@@ -34,38 +33,42 @@ p.intro {
 
 .section-title {
     font-weight: bold;
-    color: #0a2342; /* deep navy */
+    color: #0a2342;
     font-size: 1.2rem;
 }
 
 .section-content {
     margin-top: 5px;
     font-size: 1rem;
-    color: #2f2f3a; /* muted navy-gray */
+    color: #2f2f3a;
 }
 
-
 nav {
-    background: #0a2342; /* deep navy */
-    padding: 12px 20px;
+    background: #0a2342;
+    padding: 18px 25px;
     text-align: center;
     border-radius: 12px;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    font-size: 1.2rem;
 }
 
 nav a {
-    color: #f8f9fb; /* light text */
-    margin: 0 15px;
+    color: #f8f9fb;
+    margin: 0 20px;
     text-decoration: none;
     font-weight: bold;
-    font-size: 1.05rem;
-    padding: 8px 12px;
+    font-size: 1.15rem;
+    padding: 10px 14px;
     border-radius: 8px;
     transition: all 0.3s ease;
 }
 
 nav a:hover {
-    background-color: #c9a227; /* gold accent on hover */
-    color: #0a2342; /* navy text when hovered */
+    background-color: #c9a227;
+    color: #0a2342;
+}
+
+nav a.assignments {
+    color: #ffffff;
 }
