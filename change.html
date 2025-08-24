@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Calculate Change</title>
+<style>
+    body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+    h2 { font-size: 24px; }
+    input, button { padding: 8px; font-size: 16px; }
+    #result { margin-top: 20px; text-align: left; display: inline-block; }
+</style>
+</head>
+<body>
+
+<h2>Calculate Change</h2>
+<label>Enter Amount: </label>
+<input type="number" id="amount" placeholder="Enter amount in Baht">
+<button onclick="calculateChange()">Submit</button>
+
+<div id="result"></div>
+
+<script>
+function calculateChange() {
+    let amount = parseInt(document.getElementById("amount").value);
+    if (isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid amount greater than 0.");
+        return;
+    }
+
+    let denominations = [500, 100, 50, 20, 1];
+    let output = "";
+
+    for (let denom of denominations) {
+        let count = Math.floor(amount / denom);
+        if (count > 0) {
+            output += `${count} of ฿${denom}<br>`;
+            amount %= denom;
+        }
+    }
+
+    document.getElementById("result").innerHTML = output;
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Grade Assignment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    label, input, button {
+      margin: 10px 0;
+      display: block;
+    }
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Instructions</h2>
+  <p>Grade Assignment</p>
+  
+  <label for="score">Enter the Score:</label>
+  <input type="number" id="score" min="0" max="100" />
+  <button onclick="gradeAssignment()">Submit</button>
+  
+  <div id="result"></div>
+
+  <h3>Grading Scale</h3>
+  <p>90 - A<br>80 - B<br>70 - C<br>60 - D</p>
+
+  <script>
+    function gradeAssignment() {
+      const score = parseInt(document.getElementById('score').value);
+      let grade = '';
+
+      if (isNaN(score)) {
+        grade = 'Please enter a valid number.';
+      } else if (score >= 90) {
+        grade = 'A';
+      } else if (score >= 80) {
+        grade = 'B';
+      } else if (score >= 70) {
+        grade = 'C';
+      } else if (score >= 60) {
+        grade = 'D';
+      } else {
+        grade = 'F';
+      }
+
+      document.getElementById('result').innerText = `You got "${grade}": grade.`;
+    }
+  </script>
+
+</body>
+</html>

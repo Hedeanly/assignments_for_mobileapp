@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>All-in-One Tools</title>
+<style>
+    body { font-family: Arial, sans-serif; text-align: center; background: #f8f8f8; padding-top: 50px; }
+    .section { display: none; }
+    button, select, input { margin: 5px; padding: 10px; font-size: 16px; }
+    button { background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+    #resultChange { margin-top: 20px; text-align: left; display: inline-block; }
+</style>
+</head>
+<body>
+
+<!-- Main Menu -->
+<div id="menu" class="section" style="display:block;">
+    <h1>Welcome</h1>
+    <p>Select a tool:</p>
+    <button onclick="showSection('converter')">Unit Converter</button>
+    <button onclick="showSection('grading')">Grading</button>
+    <button onclick="showSection('change')">Calculate Change</button>
+</div>
+
+<!-- Unit Converter -->
+<div id="converter" class="section">
+    <h2>Unit Converter</h2>
+    <label>Enter value:</label>
+    <input type="number" id="inputValue"><br><br>
+    <label>Select unit type:</label>
+    <select id="unitType">
+        <option value="length">Length (m to ft)</option>
+        <option value="temperature">Temperature (°C to °F)</option>
+        <option value="area">Area (m² to ft²)</option>
+    </select><br><br>
+    <button onclick="convert()">Convert</button>
+    <p id="resultConverter"></p>
+    <button onclick="goBack()">Back</button>
+</div>
+
+<!-- Grading -->
+<div id="grading" class="section">
+    <h2>Grade Calculator</h2>
+    <input type="number" id="score" placeholder="Enter score (0-100)">
+    <button onclick="getGrade()">Get Grade</button>
+    <p id="resultGrading"></p>
+    <button onclick="goBack()">Back</button>
+</div>
+
+<!-- Calculate Change -->
+<div id="change" class="section">
+    <h2>Calculate Change</h2>
+    <label>Enter Amount: </label>
+    <input type="number" id="amount" placeholder="Enter amount in Baht">
+    <button onclick="calculateChange()">Submit</button>
+    <div id="resultChange"></div>
+    <button onclick="goBack()">Back</button>
+</div>
+
+<script>
+// Show selected section
+function showSection(id) {
+    document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
+    document.getElementById(id).style.display = 'block';
+}
+
+// Back button
+function goBack() {
+    document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
+    document.getElementById('menu').style.display = 'block';
+}
+
+// Unit Converter
+function convert() {
+    let val = parseFloat(document.getElementById("inputValue").value);
+    let type = document.getElementById("unitType").value;
+    let result;
+    if (isNaN(val)) {
+        alert("Please enter a number.");
+        return;
+    }
+    if (type === "length") {
+        result = `${val} meters = ${(val * 3.28084).toFixed(2)} feet`;
+    } else if (type === "temperature") {
+        result = `${val}°C = ${((val * 9/5) + 32).toFixed(2)}°F`;
+    } else if (type === "area") {
+        result = `${val} m² = ${(val * 10.7639).toFixed(2)} ft²`;
+    }
+    document.getElementById("resultConverter").innerText = result;
+}
+
+// Grading
+function getGrade() {
+    let score = document.getElementById("score").value;
+    if (score === "" || isNaN(score) || score < 0 || score > 100) {
+        alert("Please enter a valid score between 0 and 100.");
+        return;
+    }
+    let grade = (score >= 90) ? "A" :
+                (score >= 80) ? "B" :
+                (score >= 70) ? "C" :
+                (score >= 60) ? "D" : "F";
+    document.getElementById("resultGrading").innerText = `Your grade is: ${grade}`;
+}
+
+// Calculate Change
+function calculateChange() {
+    let amount = parseInt(document.getElementById("amount").value);
+    if (isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid amount greater than 0.");
+        return;
+    }
+    let denominations = [500, 100, 50, 20, 1];
+    let output = "";
+    for (let denom of denominations) {
+        let count = Math.floor(amount / denom);
+        if (count > 0) {
+            output += `${count} of ฿${denom}<br>`;
+            amount %= denom;
+        }
+    }
+    document.getElementById("resultChange").innerHTML = output;
+}
+</script>
+
+</body>
+</html>
