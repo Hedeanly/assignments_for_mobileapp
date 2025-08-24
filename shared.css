@@ -43,32 +43,34 @@ p.intro {
     color: #2f2f3a;
 }
 
+/* Navigation Bar */
 nav {
-    background: #0a2342;
-    padding: 18px 25px;
+    background: #0a2342; /* deep navy */
+    padding: 18px 25px;  /* bigger height */
     text-align: center;
     border-radius: 12px;
     margin-bottom: 30px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    font-size: 1.2rem;
+    font-size: 1.2rem; /* bigger text */
 }
 
 nav a {
-    color: #f8f9fb;
+    color: #f8f9fb; /* light text */
     margin: 0 20px;
     text-decoration: none;
     font-weight: bold;
-    font-size: 1.15rem;
+    font-size: 1.15rem; /* bigger font */
     padding: 10px 14px;
     border-radius: 8px;
     transition: all 0.3s ease;
 }
 
 nav a:hover {
-    background-color: #c9a227;
-    color: #0a2342;
+    background-color: #c9a227; /* gold accent on hover */
+    color: #0a2342; /* navy text when hovered */
 }
 
+/* Special styling for Assignments link */
 nav a.assignments {
-    color: #ffffff;
+    color: #ffffff; /* pure white text */
 }
