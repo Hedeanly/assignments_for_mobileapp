@@ -5,17 +5,19 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Study Mode — Pognleap Peung</title>
   <style>
-    :root{--bg:#f3f4f6;--card:#ffffff;--accent:#10b981;--muted:#6b7280}
+    :root{--bg:#f3f4f6;--card:#ffffff;--accent:#10b981;--muted:#6b7280;--green-1:#ebedf0;--green-2:#c6e48b;--green-3:#7bc96f;--green-4:#239a3b;--green-5:#1a742f;}
     html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
     body{background:var(--bg);display:flex;align-items:flex-start;justify-content:center;padding:24px}
-    .app{width:980px;max-width:100%;}
+    .app{width:980px;max-width:100%;pointer-events:auto;}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
     .title{font-weight:700;font-size:18px}
     .subtitle{color:var(--muted);font-size:13px}
-    .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:10px;border:0;cursor:pointer}
-    .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(16,185,129,.12)}
+    .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:10px;border:0;cursor:pointer;transition:background-color .2s}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(16,185,129,.12);transition:background-color .2s,color .2s}
+    .btn:hover{background:#0e9f6e;}
+    .btn.ghost:hover{background:rgba(16,185,129,.1);color:#0e9f6e;}
     .layout{display:grid;grid-template-columns:1fr 360px;gap:16px}
-    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(2,6,23,.06)}
+    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(2,6,23,.06);pointer-events:auto}
     .controls{display:flex;gap:8px;align-items:center;margin-bottom:12px}
     .timer{font-size:48px;font-weight:700;text-align:center;padding:18px;border-radius:12px}
     .status{font-size:13px;color:var(--muted);text-align:center;margin-top:8px}
@@ -23,7 +25,9 @@
     .checklist input[type=text]{width:100%;padding:8px;border-radius:8px;border:1px solid #e5e7eb}
     .tasks{margin-top:10px;display:flex;flex-direction:column;gap:8px}
     .task{display:flex;align-items:center;gap:8px}
-    .task label{flex:1}
+    .task label{flex:1; word-break: break-all;}
+    .task input[type="checkbox"] {cursor:pointer;}
+    .task.completed label {text-decoration: line-through; color: var(--muted);}
     textarea{width:100%;min-height:120px;padding:10px;border-radius:8px;border:1px solid #e5e7eb}
     .perf-grid{display:flex;flex-direction:column;gap:12px}
     .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
@@ -31,9 +35,11 @@
     .legend{display:flex;gap:6px;align-items:center}
     .small{font-size:12px;color:var(--muted)}
     footer{margin-top:14px;display:flex;justify-content:space-between;align-items:center}
-    .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,.45);visibility:hidden;opacity:0;transition:all .18s}
+    .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,.45);visibility:hidden;opacity:0;transition:all .18s;pointer-events:auto}
     .modal.show{visibility:visible;opacity:1}
-    .modal .card{width:420px}
+    .modal .card{width:420px;pointer-events:auto}
+    .modal-content {max-height: 80vh; overflow-y: auto;}
+    .session-log-item {padding: 10px; border-bottom: 1px solid #e5e7eb;}
   </style>
 </head>
 <body>
@@ -46,7 +52,6 @@
       <div style="display:flex;gap:8px;align-items:center">
         <button id="helpBtn" class="btn ghost">Need Help?</button>
         <button id="viewPerf" class="btn">View Performance</button>
-        <button id="viewOld" class="btn ghost">View Old Sessions</button>
       </div>
     </header>
 
@@ -146,7 +151,7 @@
   </div>
 
   <div id="modal" class="modal">
-    <div class="card">
+    <div class="card modal-content">
       <h3 id="modalTitle">Break time</h3>
       <div id="modalBody" style="margin-top:8px;color:var(--muted)"></div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
@@ -157,110 +162,231 @@
   </div>
 
   <script>
-    const LS_KEY = 'study_mode_data_v2';
-    function loadData(){try{return JSON.parse(localStorage.getItem(LS_KEY)||'{}')}catch(e){return {}}}
-    function saveData(d){localStorage.setItem(LS_KEY,JSON.stringify(d))}
-    let data = loadData();
-    if(!data.sessions) data.sessions = [];
-    if(!data.checklist) data.checklist = [];
-
+    let timerInterval, secondsLeft, isRunning = false, isStudySession = true, startTime;
+    const timerBox = document.getElementById('timerBox');
+    const statusText = document.getElementById('statusText');
     const startBtn = document.getElementById('startBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const resetBtn = document.getElementById('resetBtn');
-    const timerBox = document.getElementById('timerBox');
-    const statusText = document.getElementById('statusText');
-    const sessionLen = document.getElementById('sessionLen');
-    const autoBreakAt = document.getElementById('autoBreakAt');
-    const addTask = document.getElementById('addTask');
-    const newTask = document.getElementById('newTask');
-    const tasksEl = document.getElementById('tasks');
-    const notesEl = document.getElementById('notes');
-    const saveNow = document.getElementById('saveNow');
-    const endSession = document.getElementById('endSession');
-    const gridEl = document.getElementById('grid');
-    const totSessions = document.getElementById('totSessions');
-    const recentEl = document.getElementById('recent');
-    const viewPerf = document.getElementById('viewPerf');
-    const helpBtn = document.getElementById('helpBtn');
-    const viewOld = document.getElementById('viewOld');
-
+    const sessionLenSelect = document.getElementById('sessionLen');
+    const autoBreakAtInput = document.getElementById('autoBreakAt');
+    const notesTextarea = document.getElementById('notes');
+    const saveNowBtn = document.getElementById('saveNow');
+    const endSessionBtn = document.getElementById('endSession');
+    const newTaskInput = document.getElementById('newTask');
+    const addTaskBtn = document.getElementById('addTask');
+    const tasksDiv = document.getElementById('tasks');
+    const viewPerfBtn = document.getElementById('viewPerf');
+    const totSessionsDiv = document.getElementById('totSessions');
+    const gridDiv = document.getElementById('grid');
+    const recentDiv = document.getElementById('recent');
     const modal = document.getElementById('modal');
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
-    const modalClose = document.getElementById('modalClose');
-    const modalAction = document.getElementById('modalAction');
+    const modalCloseBtn = document.getElementById('modalClose');
+    const modalActionBtn = document.getElementById('modalAction');
 
-    let timerInterval = null;
-    let totalSeconds = parseInt(sessionLen.value)*60;
-    let secondsLeft = totalSeconds;
-    let running = false;
-    let startedAt = null;
-    let elapsedBeforePause = 0;
-    let breakActive = false;
-    let breakSecondsLeft = 0;
-    let breakAutoTriggered = false;
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    let sessions = JSON.parse(localStorage.getItem('sessions')) || [];
 
-    function formatTime(s){const m=Math.floor(s/60);const sec=s%60;return String(m).padStart(2,'0')+":"+String(sec).padStart(2,'0')}
-    function renderTimer(){ timerBox.textContent = formatTime(secondsLeft); }
-    function setStageColor(colorLabel){
-      if(colorLabel==='studying') timerBox.style.background = 'linear-gradient(180deg,#e6ffef,#ecfff1)';
-      else if(colorLabel==='break') timerBox.style.background = 'linear-gradient(180deg,#eff6ff,#f4fbff)';
-      else if(colorLabel==='finished') timerBox.style.background = 'linear-gradient(180deg,#fff9ec,#fff7e6)';
-      else timerBox.style.background = 'linear-gradient(180deg,#fff,#fbfff8)';
+    function formatTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
     }
 
-    function startTimer(){
-      if(running) return;
-      if(breakActive) return;
-      running = true;
-      startedAt = Date.now() - elapsedBeforePause*1000;
-      statusText.textContent = 'Studying';
-      setStageColor('studying');
-      timerInterval = setInterval(tick, 250);
+    function renderTimer() {
+      timerBox.textContent = formatTime(secondsLeft);
     }
 
-    function pauseTimer(){
-      if(!running) return;
-      running = false;
-      clearInterval(timerInterval);
-      elapsedBeforePause = Math.floor((Date.now()-startedAt)/1000);
-      statusText.textContent = 'Paused';
-      setStageColor('idle');
-    }
-
-    function resetTimer(){
-      if(confirm('Reset timer and clear all tasks and notes?')){
-        running = false; clearInterval(timerInterval);
-        totalSeconds = parseInt(sessionLen.value)*60; secondsLeft = totalSeconds;
-        elapsedBeforePause = 0; startedAt = null; breakActive=false; breakAutoTriggered=false;
-        statusText.textContent = 'Idle'; renderTimer(); setStageColor('idle');
-        notesEl.value = '';
-        data.checklist = []; saveData(data); renderTasks();
+    function tick() {
+      if (secondsLeft > 0) {
+        secondsLeft--;
+        renderTimer();
+        const elapsedMinutes = Math.floor((parseInt(sessionLenSelect.value) * 60 - secondsLeft) / 60);
+        const autoBreakTime = parseInt(autoBreakAtInput.value);
+        
+        if (elapsedMinutes === autoBreakTime && autoBreakTime > 0) {
+          showModal('Time for a short break!', `You have studied for ${autoBreakTime} minutes. It's a good time to take a break.`);
+        }
+      } else {
+        clearInterval(timerInterval);
+        isRunning = false;
+        statusText.textContent = 'Finished';
+        saveSession();
       }
     }
 
-    function tick(){
-      if(breakActive){ if(breakSecondsLeft>0){ breakSecondsLeft -=0.25; if(breakSecondsLeft<0) breakSecondsLeft=0; modalBody.textContent = 'Break remaining: ' + formatTime(Math.ceil(breakSecondsLeft)); }
-      else{ endBreak(); } return; }
-      const elapsed = Math.floor((Date.now()-startedAt)/1000);
-      secondsLeft = totalSeconds - elapsed;
-      if(secondsLeft<=0){ secondsLeft=0; renderTimer(); finishSession(); return; }
-      const autoAt = parseInt(autoBreakAt.value) || 15;
-      if(!breakAutoTriggered && elapsed>=autoAt*60){ triggerBreak(); }
+    function startTimer() {
+      if (!isRunning) {
+        isRunning = true;
+        startTime = new Date();
+        statusText.textContent = 'Studying';
+        timerInterval = setInterval(tick, 1000);
+      }
+    }
+
+    function pauseTimer() {
+      if (isRunning) {
+        isRunning = false;
+        clearInterval(timerInterval);
+        statusText.textContent = 'Paused';
+      }
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      secondsLeft = parseInt(sessionLenSelect.value) * 60;
       renderTimer();
+      statusText.textContent = 'Idle';
     }
 
-    function triggerBreak(){
-      breakAutoTriggered = true; breakActive = true; breakSecondsLeft = 10*60; pauseTimer();
-      modalTitle.textContent = 'Take a 10-minute break';
-      modalBody.textContent = 'Auto-break started. Relax for 10 minutes — a break countdown has started.';
-      modalAction.textContent = 'End break now'; showModal(); setStageColor('break');
+    function showModal(title, body, actionText = 'OK', actionCallback) {
+      modalTitle.textContent = title;
+      modalBody.textContent = body;
+      modalActionBtn.textContent = actionText;
+      modalActionBtn.onclick = function() {
+        closeModal();
+        if (actionCallback) actionCallback();
+      };
+      modal.classList.add('show');
     }
 
-    function endBreak(){ breakActive = false; hideModal(); setStageColor('studying'); elapsedBeforePause = Math.floor((Date.now()-startedAt)/1000); running = true; timerInterval = setInterval(tick,250); statusText.textContent = 'Studying (resumed)'; }
+    function closeModal() {
+      modal.classList.remove('show');
+    }
+    
+    function addTask() {
+        const text = newTaskInput.value.trim();
+        if (text) {
+            tasks.push({ text: text, completed: false });
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            newTaskInput.value = '';
+            renderTasks();
+        }
+    }
 
-    function finishSession(){ clearInterval(timerInterval); running=false; breakActive=false; statusText.textContent = 'Finished'; setStageColor('finished');
-      const notes = notesEl.value.trim();
-      const tasks = data.checklist || [];
-      const completed = tasks.filter(t=>t.done).length;
-      const sess = {id:Date.now(),date:new
+    function renderTasks() {
+        tasksDiv.innerHTML = '';
+        tasks.forEach((task, index) => {
+            const taskEl = document.createElement('div');
+            taskEl.className = `task ${task.completed ? 'completed' : ''}`;
+            taskEl.innerHTML = `
+                <input type="checkbox" id="task-${index}" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})">
+                <label for="task-${index}">${task.text}</label>
+            `;
+            tasksDiv.appendChild(taskEl);
+        });
+    }
+
+    function toggleTask(index) {
+        tasks[index].completed = !tasks[index].completed;
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        renderTasks();
+    }
+    
+    function saveSession(isManualEnd = false) {
+      const endTime = new Date();
+      const duration = isManualEnd ? Math.floor((endTime - startTime) / 1000 / 60) : parseInt(sessionLenSelect.value);
+      
+      const sessionData = {
+        date: endTime.toISOString().split('T')[0],
+        duration: duration,
+        tasks: tasks,
+        notes: notesTextarea.value
+      };
+      
+      sessions.push(sessionData);
+      localStorage.setItem('sessions', JSON.stringify(sessions));
+      
+      notesTextarea.value = '';
+      tasks = [];
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      renderTasks();
+      updatePerformance();
+      showModal('Session Saved!', `Your ${duration}-minute session and notes have been saved.`);
+    }
+
+    function updatePerformance() {
+        totSessionsDiv.textContent = sessions.length;
+        renderPerformanceGrid();
+        renderRecentSessions();
+    }
+
+    function renderPerformanceGrid() {
+        gridDiv.innerHTML = '';
+        const today = new Date();
+        const sessionsByDay = sessions.reduce((acc, session) => {
+            acc[session.date] = (acc[session.date] || 0) + 1;
+            return acc;
+        }, {});
+
+        for (let i = 29; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(today.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            const sessionsCount = sessionsByDay[dateStr] || 0;
+            
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day';
+            dayDiv.textContent = sessionsCount;
+            
+            if (sessionsCount > 0 && sessionsCount <= 2) dayDiv.style.background = '#c6e48b';
+            else if (sessionsCount > 2 && sessionsCount <= 5) dayDiv.style.background = '#7bc96f';
+            else if (sessionsCount > 5 && sessionsCount <= 9) dayDiv.style.background = '#239a3b';
+            else if (sessionsCount > 9) dayDiv.style.background = '#196127';
+            
+            gridDiv.appendChild(dayDiv);
+        }
+    }
+
+    function renderRecentSessions() {
+        recentDiv.innerHTML = '';
+        const recent = sessions.slice(-5).reverse();
+        
+        if (recent.length === 0) {
+            recentDiv.innerHTML = '<div class="small">No recent sessions found.</div>';
+            return;
+        }
+
+        recent.forEach(session => {
+            const sessionDiv = document.createElement('div');
+            sessionDiv.className = 'small';
+            sessionDiv.style.marginBottom = '4px';
+            sessionDiv.innerHTML = `
+                <strong>${session.date}:</strong> ${session.duration} min
+                (${session.tasks.filter(t => t.completed).length}/${session.tasks.length} tasks)
+            `;
+            recentDiv.appendChild(sessionDiv);
+        });
+    }
+
+    // Event listeners
+    startBtn.onclick = startTimer;
+    pauseBtn.onclick = pauseTimer;
+    resetBtn.onclick = resetTimer;
+    addTaskBtn.onclick = addTask;
+    newTaskInput.onkeydown = (e) => { if (e.key === 'Enter') { addTask(); }};
+    saveNowBtn.onclick = () => saveSession(true);
+    endSessionBtn.onclick = () => {
+      pauseTimer();
+      saveSession(true);
+      resetTimer();
+    };
+    viewPerfBtn.onclick = updatePerformance;
+    modalCloseBtn.onclick = closeModal;
+
+    sessionLenSelect.onchange = function() {
+      if (!isRunning) {
+        secondsLeft = parseInt(this.value) * 60;
+        renderTimer();
+      }
+    };
+
+    // Initial setup
+    resetTimer();
+    renderTasks();
+    updatePerformance();
+  </script>
+</body>
+</html>
