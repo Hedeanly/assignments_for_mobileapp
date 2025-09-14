@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Study Mode — Pognleap Peung</title>
+  <style>
+    :root{--bg:#f3f4f6;--card:#ffffff;--accent:#10b981;--muted:#6b7280}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{background:var(--bg);display:flex;align-items:flex-start;justify-content:center;padding:24px}
+    .app{width:980px;max-width:100%;}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .title{font-weight:700;font-size:18px}
+    .subtitle{color:var(--muted);font-size:13px}
+    .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:10px;border:0;cursor:pointer}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(16,185,129,.12)}
+    .layout{display:grid;grid-template-columns:1fr 360px;gap:16px}
+    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(2,6,23,.06)}
+    .controls{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    .timer{font-size:48px;font-weight:700;text-align:center;padding:18px;border-radius:12px}
+    .status{font-size:13px;color:var(--muted);text-align:center;margin-top:8px}
+    .checklist{margin-top:12px}
+    .checklist input[type=text]{width:100%;padding:8px;border-radius:8px;border:1px solid #e5e7eb}
+    .tasks{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+    .task{display:flex;align-items:center;gap:8px}
+    .task label{flex:1}
+    textarea{width:100%;min-height:120px;padding:10px;border-radius:8px;border:1px solid #e5e7eb}
+    .perf-grid{display:flex;flex-direction:column;gap:12px}
+    .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+    .day{width:36px;height:24px;border-radius:4px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:10px;color:#111}
+    .legend{display:flex;gap:6px;align-items:center}
+    .small{font-size:12px;color:var(--muted)}
+    footer{margin-top:14px;display:flex;justify-content:space-between;align-items:center}
+    .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,.45);visibility:hidden;opacity:0;transition:all .18s}
+    .modal.show{visibility:visible;opacity:1}
+    .modal .card{width:420px}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <div class="title">Study Mode — <span style="color:#0f172a">Pognleap Peung</span></div>
+        <div class="subtitle">ID: 220702403584</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="helpBtn" class="btn ghost">Need Help?</button>
+        <button id="viewPerf" class="btn">View Performance</button>
+        <button id="viewOld" class="btn ghost">View Old Sessions</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <div>
+        <div class="card">
+          <div class="controls">
+            <label style="display:flex;gap:6px;align-items:center">
+              <span class="small">Session (minutes)</span>
+              <select id="sessionLen">
+                <option value="25">25</option>
+                <option value="45">45</option>
+                <option value="50">50</option>
+                <option value="15">15</option>
+              </select>
+            </label>
+
+            <label style="display:flex;gap:6px;align-items:center">
+              <span class="small">Auto break at (minutes)</span>
+              <input id="autoBreakAt" type="number" value="15" style="width:64px;padding:6px;border-radius:6px;border:1px solid #e5e7eb" />
+            </label>
+
+            <div style="margin-left:auto;display:flex;gap:8px">
+              <button id="startBtn" class="btn">Start Studying</button>
+              <button id="pauseBtn" class="btn ghost">Pause</button>
+              <button id="resetBtn" class="btn ghost">Reset</button>
+            </div>
+          </div>
+
+          <div id="stage" style="margin-top:10px">
+            <div id="timerBox" class="timer" style="background:linear-gradient(180deg,#fff,#fbfff8)">25:00</div>
+            <div id="statusText" class="status">Idle</div>
+
+            <div class="checklist">
+              <div style="display:flex;gap:8px;align-items:center">
+                <input id="newTask" type="text" placeholder="Add checklist item..." />
+                <button id="addTask" class="btn ghost">Add</button>
+              </div>
+
+              <div id="tasks" class="tasks"></div>
+            </div>
+
+            <div style="margin-top:12px">
+              <div style="font-weight:600;margin-bottom:6px">Study Notes / Summary</div>
+              <textarea id="notes" placeholder="Write a short summary while you study..."></textarea>
+              <div style="display:flex;justify-content:space-between;margin-top:8px;align-items:center">
+                <div class="small">Notes are saved with each completed session.</div>
+                <div style="display:flex;gap:8px">
+                  <button id="saveNow" class="btn ghost">Save Notes</button>
+                  <button id="endSession" class="btn">End Session</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div>
+        <div class="card perf-grid">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:700">Performance</div>
+              <div class="small">Sessions & streaks</div>
+            </div>
+            <div style="text-align:right">
+              <div id="totSessions" style="font-weight:700">0</div>
+              <div class="small">Total sessions</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="small" style="margin-bottom:6px">Last 30 days</div>
+            <div id="grid" class="grid"></div>
+            <div class="legend"><div class="small">Less</div>
+              <div class="day" style="background:#c6e48b"></div>
+              <div class="day" style="background:#7bc96f"></div>
+              <div class="day" style="background:#239a3b"></div>
+              <div class="day" style="background:#196127"></div>
+              <div class="small">More</div>
+            </div>
+          </div>
+
+          <hr />
+          <div>
+            <div style="font-weight:600;margin-bottom:6px">Recent sessions</div>
+            <div id="recent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="small">Study Mode — Simple utility · Designed for assignment</div>
+      <div class="small">Made by Pognleap Peung · ID: 220702403584</div>
+    </footer>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="card">
+      <h3 id="modalTitle">Break time</h3>
+      <div id="modalBody" style="margin-top:8px;color:var(--muted)"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button id="modalClose" class="btn ghost">Close</button>
+        <button id="modalAction" class="btn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LS_KEY = 'study_mode_data_v2';
+    function loadData(){try{return JSON.parse(localStorage.getItem(LS_KEY)||'{}')}catch(e){return {}}}
+    function saveData(d){localStorage.setItem(LS_KEY,JSON.stringify(d))}
+    let data = loadData();
+    if(!data.sessions) data.sessions = [];
+    if(!data.checklist) data.checklist = [];
+
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const timerBox = document.getElementById('timerBox');
+    const statusText = document.getElementById('statusText');
+    const sessionLen = document.getElementById('sessionLen');
+    const autoBreakAt = document.getElementById('autoBreakAt');
+    const addTask = document.getElementById('addTask');
+    const newTask = document.getElementById('newTask');
+    const tasksEl = document.getElementById('tasks');
+    const notesEl = document.getElementById('notes');
+    const saveNow = document.getElementById('saveNow');
+    const endSession = document.getElementById('endSession');
+    const gridEl = document.getElementById('grid');
+    const totSessions = document.getElementById('totSessions');
+    const recentEl = document.getElementById('recent');
+    const viewPerf = document.getElementById('viewPerf');
+    const helpBtn = document.getElementById('helpBtn');
+    const viewOld = document.getElementById('viewOld');
+
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+    const modalAction = document.getElementById('modalAction');
+
+    let timerInterval = null;
+    let totalSeconds = parseInt(sessionLen.value)*60;
+    let secondsLeft = totalSeconds;
+    let running = false;
+    let startedAt = null;
+    let elapsedBeforePause = 0;
+    let breakActive = false;
+    let breakSecondsLeft = 0;
+    let breakAutoTriggered = false;
+
+    function formatTime(s){const m=Math.floor(s/60);const sec=s%60;return String(m).padStart(2,'0')+":"+String(sec).padStart(2,'0')}
+    function renderTimer(){ timerBox.textContent = formatTime(secondsLeft); }
+    function setStageColor(colorLabel){
+      if(colorLabel==='studying') timerBox.style.background = 'linear-gradient(180deg,#e6ffef,#ecfff1)';
+      else if(colorLabel==='break') timerBox.style.background = 'linear-gradient(180deg,#eff6ff,#f4fbff)';
+      else if(colorLabel==='finished') timerBox.style.background = 'linear-gradient(180deg,#fff9ec,#fff7e6)';
+      else timerBox.style.background = 'linear-gradient(180deg,#fff,#fbfff8)';
+    }
+
+    function startTimer(){
+      if(running) return;
+      if(breakActive) return;
+      running = true;
+      startedAt = Date.now() - elapsedBeforePause*1000;
+      statusText.textContent = 'Studying';
+      setStageColor('studying');
+      timerInterval = setInterval(tick, 250);
+    }
+
+    function pauseTimer(){
+      if(!running) return;
+      running = false;
+      clearInterval(timerInterval);
+      elapsedBeforePause = Math.floor((Date.now()-startedAt)/1000);
+      statusText.textContent = 'Paused';
+      setStageColor('idle');
+    }
+
+    function resetTimer(){
+      if(confirm('Reset timer and clear all tasks and notes?')){
+        running = false; clearInterval(timerInterval);
+        totalSeconds = parseInt(sessionLen.value)*60; secondsLeft = totalSeconds;
+        elapsedBeforePause = 0; startedAt = null; breakActive=false; breakAutoTriggered=false;
+        statusText.textContent = 'Idle'; renderTimer(); setStageColor('idle');
+        notesEl.value = '';
+        data.checklist = []; saveData(data); renderTasks();
+      }
+    }
+
+    function tick(){
+      if(breakActive){ if(breakSecondsLeft>0){ breakSecondsLeft -=0.25; if(breakSecondsLeft<0) breakSecondsLeft=0; modalBody.textContent = 'Break remaining: ' + formatTime(Math.ceil(breakSecondsLeft)); }
+      else{ endBreak(); } return; }
+      const elapsed = Math.floor((Date.now()-startedAt)/1000);
+      secondsLeft = totalSeconds - elapsed;
+      if(secondsLeft<=0){ secondsLeft=0; renderTimer(); finishSession(); return; }
+      const autoAt = parseInt(autoBreakAt.value) || 15;
+      if(!breakAutoTriggered && elapsed>=autoAt*60){ triggerBreak(); }
+      renderTimer();
+    }
+
+    function triggerBreak(){
+      breakAutoTriggered = true; breakActive = true; breakSecondsLeft = 10*60; pauseTimer();
+      modalTitle.textContent = 'Take a 10-minute break';
+      modalBody.textContent = 'Auto-break started. Relax for 10 minutes — a break countdown has started.';
+      modalAction.textContent = 'End break now'; showModal(); setStageColor('break');
+    }
+
+    function endBreak(){ breakActive = false; hideModal(); setStageColor('studying'); elapsedBeforePause = Math.floor((Date.now()-startedAt)/1000); running = true; timerInterval = setInterval(tick,250); statusText.textContent = 'Studying (resumed)'; }
+
+    function finishSession(){ clearInterval(timerInterval); running=false; breakActive=false; statusText.textContent = 'Finished'; setStageColor('finished');
+      const notes = notesEl.value.trim();
+      const tasks = data.checklist || [];
+      const completed = tasks.filter(t=>t.done).length;
+      const sess = {id:Date.now(),date:new
